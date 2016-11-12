@@ -4,5 +4,8 @@
 .gitignore
 README.md
 LICENSE
+circle.yml
+CHANGELOG.md
+Makefile
 
 run.sh
