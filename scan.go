@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"os/exec"
 	"strings"
@@ -14,6 +15,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/crackcomm/go-clitable"
 	"github.com/fatih/structs"
+	"github.com/gorilla/mux"
 	"github.com/maliceio/go-plugin-utils/database/elasticsearch"
 	"github.com/maliceio/go-plugin-utils/utils"
 	"github.com/parnurzeal/gorequest"
@@ -50,12 +52,44 @@ type ResultsData struct {
 	Updated  string `json:"updated" structs:"updated"`
 }
 
+// AvScan performs antivirus scan
+func AvScan(path string, timeout int) AVG {
+
+	// Give avgd 10 seconds to finish
+	avgdCtx, avgdCancel := context.WithTimeout(context.Background(), time.Duration(10)*time.Second)
+	defer avgdCancel()
+	// AVG needs to have the daemon started first
+	_, err := utils.RunCommand(avgdCtx, "/etc/init.d/avgd", "start")
+	utils.Assert(err)
+
+	var results ResultsData
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
+	defer cancel()
+
+	output, err := utils.RunCommand(ctx, "/usr/bin/avgscan", path)
+	results, err = ParseAVGOutput(output, err, path)
+
+	if err != nil {
+		// If fails try a second time
+		output, err := utils.RunCommand(ctx, "/usr/bin/avgscan", path)
+		results, err = ParseAVGOutput(output, err, path)
+		utils.Assert(err)
+	}
+
+	return AVG{
+		Results: results,
+	}
+}
+
 // ParseAVGOutput convert avg output into ResultsData struct
 func ParseAVGOutput(avgout string, err error, path string) (ResultsData, error) {
 
 	if err != nil {
 		return ResultsData{}, err
 	}
+
+	log.Debug("AVG Output: ", avgout)
 
 	avg := ResultsData{
 		Infected: false,
@@ -114,6 +148,8 @@ func getAvgVersion() string {
 	versionOut, err := utils.RunCommand(nil, "/usr/bin/avgscan", "-v")
 	utils.Assert(err)
 
+	log.Debug("AVG Version: ", versionOut)
+
 	lines := strings.Split(versionOut, "\n")
 	for _, line := range lines {
 		if len(line) != 0 {
@@ -143,10 +179,6 @@ func getUpdatedDate() string {
 	return string(updated)
 }
 
-func printStatus(resp gorequest.Response, body string, errs []error) {
-	fmt.Println(body)
-}
-
 func updateAV(ctx context.Context) error {
 	fmt.Println("Updating AVG...")
 	// AVG needs to have the daemon started first
@@ -173,24 +205,61 @@ func printMarkDownTable(avg AVG) {
 	table.Print()
 }
 
-var appHelpTemplate = `Usage: {{.Name}} {{if .Flags}}[OPTIONS] {{end}}COMMAND [arg...]
+func printStatus(resp gorequest.Response, body string, errs []error) {
+	fmt.Println(body)
+}
 
-{{.Usage}}
+func webService() {
+	router := mux.NewRouter().StrictSlash(true)
+	router.HandleFunc("/scan", webAvScan)
+	log.Info("web service listening on port :3993")
+	log.Fatal(http.ListenAndServe(":3993", router))
+}
 
-Version: {{.Version}}{{if or .Author .Email}}
+func webAvScan(w http.ResponseWriter, r *http.Request) {
 
-Author:{{if .Author}}
-  {{.Author}}{{if .Email}} - <{{.Email}}>{{end}}{{else}}
-  {{.Email}}{{end}}{{end}}
-{{if .Flags}}
-Options:
-  {{range .Flags}}{{.}}
-  {{end}}{{end}}
-Commands:
-  {{range .Commands}}{{.Name}}{{with .ShortName}}, {{.}}{{end}}{{ "\t" }}{{.Usage}}
-  {{end}}
-Run '{{.Name}} COMMAND --help' for more information on a command.
-`
+	log.Debug("Method: ", r.Method)
+	if r.Method != "POST" {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		fmt.Fprintln(w, "Method Not Allowed")
+	}
+
+	r.ParseMultipartForm(32 << 20)
+	file, header, err := r.FormFile("malware")
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintln(w, "Please supply a valid file to scan.")
+		log.Error(err)
+	}
+	defer file.Close()
+
+	log.Debug("Uploaded fileName: ", header.Filename)
+
+	tmpfile, err := ioutil.TempFile("/malware", "web_")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.Remove(tmpfile.Name()) // clean up
+
+	data, err := ioutil.ReadAll(file)
+
+	if _, err = tmpfile.Write(data); err != nil {
+		log.Fatal(err)
+	}
+	if err = tmpfile.Close(); err != nil {
+		log.Fatal(err)
+	}
+
+	// Do AV scan
+	avg := AvScan(tmpfile.Name(), 60)
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+
+	if err := json.NewEncoder(w).Encode(avg); err != nil {
+		log.Fatal(err)
+	}
+}
 
 func main() {
 
@@ -222,8 +291,12 @@ func main() {
 			Usage: "output as Markdown table",
 		},
 		cli.BoolFlag{
-			Name:   "post, p",
-			Usage:  "POST results to Malice webhook",
+			Name:  "web",
+			Usage: "create a AVG scan web service",
+		},
+		cli.BoolFlag{
+			Name:   "callback, c",
+			Usage:  "POST results back to Malice webhook",
 			EnvVar: "MALICE_ENDPOINT",
 		},
 		cli.BoolFlag{
@@ -253,67 +326,55 @@ func main() {
 	}
 	app.Action = func(c *cli.Context) error {
 
-		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(c.Int("timeout"))*time.Second)
-		defer cancel()
-
-		path := c.Args().First()
-
-		if _, err := os.Stat(path); os.IsNotExist(err) {
-			utils.Assert(err)
-		}
-
 		if c.Bool("verbose") {
 			log.SetLevel(log.DebugLevel)
 		}
 
-		// AVG needs to have the daemon started first
-		exec.Command("/etc/init.d/avgd", "start").Output()
-		// Give avgd a few to finish
-		time.Sleep(time.Second * 2)
-
-		var results ResultsData
-
-		output, err := utils.RunCommand(ctx, "/usr/bin/avgscan", path)
-		results, err = ParseAVGOutput(output, err, path)
-
-		if err != nil {
-			// If fails try a second time
-			output, err := utils.RunCommand(ctx, "/usr/bin/avgscan", path)
-			results, err = ParseAVGOutput(output, err, path)
-			utils.Assert(err)
+		if c.Bool("web") {
+			webService()
+			return nil
 		}
 
-		avg := AVG{
-			Results: results,
-		}
+		if c.Args().Present() {
 
-		// upsert into Database
-		elasticsearch.InitElasticSearch(elastic)
-		elasticsearch.WritePluginResultsToDatabase(elasticsearch.PluginResults{
-			ID:       utils.Getopt("MALICE_SCANID", utils.GetSHA256(path)),
-			Name:     name,
-			Category: category,
-			Data:     structs.Map(avg.Results),
-		})
+			path := c.Args().First()
 
-		if c.Bool("table") {
-			printMarkDownTable(avg)
-		} else {
-			avgJSON, err := json.Marshal(avg)
-			utils.Assert(err)
-			if c.Bool("post") {
-				request := gorequest.New()
-				if c.Bool("proxy") {
-					request = gorequest.New().Proxy(os.Getenv("MALICE_PROXY"))
-				}
-				request.Post(os.Getenv("MALICE_ENDPOINT")).
-					Set("X-Malice-ID", utils.Getopt("MALICE_SCANID", utils.GetSHA256(path))).
-					Send(string(avgJSON)).
-					End(printStatus)
-
-				return nil
+			if _, err := os.Stat(path); os.IsNotExist(err) {
+				utils.Assert(err)
 			}
-			fmt.Println(string(avgJSON))
+
+			avg := AvScan(path, c.Int("timeout"))
+
+			// upsert into Database
+			elasticsearch.InitElasticSearch(elastic)
+			elasticsearch.WritePluginResultsToDatabase(elasticsearch.PluginResults{
+				ID:       utils.Getopt("MALICE_SCANID", utils.GetSHA256(path)),
+				Name:     name,
+				Category: category,
+				Data:     structs.Map(avg.Results),
+			})
+
+			if c.Bool("table") {
+				printMarkDownTable(avg)
+			} else {
+				avgJSON, err := json.Marshal(avg)
+				utils.Assert(err)
+				if c.Bool("callback") {
+					request := gorequest.New()
+					if c.Bool("proxy") {
+						request = gorequest.New().Proxy(os.Getenv("MALICE_PROXY"))
+					}
+					request.Post(os.Getenv("MALICE_ENDPOINT")).
+						Set("X-Malice-ID", utils.Getopt("MALICE_SCANID", utils.GetSHA256(path))).
+						Send(string(avgJSON)).
+						End(printStatus)
+
+					return nil
+				}
+				fmt.Println(string(avgJSON))
+			}
+		} else {
+			log.Fatal(fmt.Errorf("Please supply a file to scan with malice/avg"))
 		}
 		return nil
 	}
