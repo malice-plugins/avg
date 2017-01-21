@@ -39,14 +39,14 @@ Author:
   blacktop - <https://github.com/blacktop>
 
 Options:
-  --table, -t	output as Markdown table
-  --web          create a AVG scan web service
-  --callback, -c	POST results to Malice webhook [$MALICE_ENDPOINT]
-  --proxy, -x	proxy settings for Malice webhook endpoint [$MALICE_PROXY]
+  --table, -t	       output as Markdown table
+  --web                 create a AVG scan web service
+  --callback, -c	    POST results to Malice webhook [$MALICE_ENDPOINT]
+  --proxy, -x	       proxy settings for Malice webhook endpoint [$MALICE_PROXY]
   --timeout value       malice plugin timeout (in seconds) (default: 60) [$MALICE_TIMEOUT]    
   --elasitcsearch value elasitcsearch address for Malice to store results [$MALICE_ELASTICSEARCH]   
-  --help, -h	show help
-  --version, -v	print the version
+  --help, -h	        show help
+  --version, -v	     print the version
 
 Commands:
   update	Update virus definitions
