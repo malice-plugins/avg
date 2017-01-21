@@ -40,7 +40,8 @@ Author:
 
 Options:
   --table, -t	output as Markdown table
-  --post, -p	POST results to Malice webhook [$MALICE_ENDPOINT]
+  --web          create a AVG scan web service
+  --callback, -c	POST results to Malice webhook [$MALICE_ENDPOINT]
   --proxy, -x	proxy settings for Malice webhook endpoint [$MALICE_PROXY]
   --timeout value       malice plugin timeout (in seconds) (default: 60) [$MALICE_TIMEOUT]    
   --elasitcsearch value elasitcsearch address for Malice to store results [$MALICE_ELASTICSEARCH]   
@@ -133,7 +134,7 @@ Date: Sat, 21 Jan 2017 05:39:29 GMT
 
 ```bash
 $ docker run -v `pwd`:/malware:ro --rm \
-             -e MALICE_ENDPOINT="https://malice.io:31337/scan/file" malice/avg --post evil.malware
+             -e MALICE_ENDPOINT="https://malice.io:31337/scan/file" malice/avg --callback evil.malware
 ```
 
 ### To update the AV run the following:
