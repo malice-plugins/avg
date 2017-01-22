@@ -83,7 +83,7 @@ Sample Output
 Documentation
 -------------
 
--	[To write results to ElasticSearch](https://github.com/maliceio/malice-avg/blob/master/docs/elasitcsearch.md)
+-	[To write results to ElasticSearch](https://github.com/maliceio/malice-avg/blob/master/docs/elasticsearch.md)
 -	[To create a AVG scan micro-service](https://github.com/maliceio/malice-avg/blob/master/docs/web.md)
 -	[To post results to a webhook](https://github.com/maliceio/malice-avg/blob/master/docs/callback.md)
 -	[To update the AV definitions](https://github.com/maliceio/malice-avg/blob/master/docs/update.md)
