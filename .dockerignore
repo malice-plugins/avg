@@ -8,6 +8,6 @@ LICENSE
 circle.yml
 CHANGELOG.md
 Makefile
-
+docs*
 run.sh
 results.json

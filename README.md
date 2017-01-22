@@ -1,11 +1,7 @@
 malice-avg
 ==========
 
-[![Circle CI](https://circleci.com/gh/maliceio/malice-avg.png?style=shield)](https://circleci.com/gh/maliceio/malice-avg)
-[![License](http://img.shields.io/:license-mit-blue.svg)](http://doge.mit-license.org)
-[![Docker Stars](https://img.shields.io/docker/stars/malice/avg.svg)](https://hub.docker.com/r/malice/avg/)
-[![Docker Pulls](https://img.shields.io/docker/pulls/malice/avg.svg)](https://hub.docker.com/r/malice/avg/)
-[![Docker Image](https://img.shields.io/badge/docker image-636 MB-blue.svg)](https://hub.docker.com/r/malice/avg/)
+[![Circle CI](https://circleci.com/gh/maliceio/malice-avg.png?style=shield)](https://circleci.com/gh/maliceio/malice-avg) [![License](http://img.shields.io/:license-mit-blue.svg)](http://doge.mit-license.org) [![Docker Stars](https://img.shields.io/docker/stars/malice/avg.svg)](https://hub.docker.com/r/malice/avg/) [![Docker Pulls](https://img.shields.io/docker/pulls/malice/avg.svg)](https://hub.docker.com/r/malice/avg/) [![Docker Image](https://img.shields.io/badge/docker image-636 MB-blue.svg)](https://hub.docker.com/r/malice/avg/)
 
 This repository contains a **Dockerfile** of [avg](http://www.avg.net/lang/en/) for [Docker](https://www.docker.io/)'s [trusted build](https://index.docker.io/u/malice/avg/) published to the public [DockerHub](https://index.docker.io/).
 
@@ -55,7 +51,8 @@ Commands:
 Run 'avg COMMAND --help' for more information on a command.
 ```
 
-## Sample Output
+Sample Output
+-------------
 
 ### JSON:
 
@@ -86,70 +83,10 @@ Run 'avg COMMAND --help' for more information on a command.
 Documentation
 -------------
 
-### To write results to [ElasticSearch](https://www.elastic.co/products/elasticsearch)
-
-```bash
-$ docker volume create --name malice
-$ docker run -d --name elastic \
-                -p 9200:9200 \
-                -v malice:/usr/share/elasticsearch/data \
-                 blacktop/elasticsearch
-$ docker run --rm -v /path/to/malware:/malware:ro --link elastic malice/avg -t FILE
-```
-
-### Create a AVG scan micro-service :new: :construction:
-
-```bash
-$ docker run -d -p 3993:3993 malice/avg web
-
-INFO[0000] web service listening on port :3993
-```
-
-Now you can perform scans like so
-
-```bash
-$ http -f localhost:3993/scan malware@/path/to/evil/malware
-```
-
-> **NOTE:** I am using **httpie** to POST to the malice micro-service
-
-```bash
-HTTP/1.1 200 OK
-Content-Length: 124
-Content-Type: application/json; charset=UTF-8
-Date: Sat, 21 Jan 2017 05:39:29 GMT
-
-{
-    "avg": {
-        "database": "4477/13807",
-        "engine": "13.0.3114",
-        "infected": true,
-        "result": "Found Win32/DH{CGE?}",
-        "updated": "20170121"
-    }
-}
-```
-
-### POST results to a webhook
-
-```bash
-$ docker run -v `pwd`:/malware:ro --rm \
-             -e MALICE_ENDPOINT="https://malice.io:31337/scan/file" malice/avg --callback evil.malware
-```
-
-### To update the AV run the following:
-
-```bash
-$ docker run --name=avg malice/avg update
-```
-
-Then to use the updated AVG container:
-
-```bash
-$ docker commit avg malice/avg:updated
-$ docker rm avg # clean up updated container
-$ docker run --rm malice/avg:updated EICAR
-```
+-	[To write results to ElasticSearch](https://github.com/maliceio/malice-avg/blob/master/docs/elasitcsearch.md)
+-	[To create a AVG scan micro-service](https://github.com/maliceio/malice-avg/blob/master/docs/web.md)
+-	[To post results to a webhook](https://github.com/maliceio/malice-avg/blob/master/docs/callback.md)
+-	[To update the AV definitions](https://github.com/maliceio/malice-avg/blob/master/docs/update.md)
 
 ### Issues
 
