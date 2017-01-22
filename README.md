@@ -49,7 +49,7 @@ Options:
 
 Commands:
   update	Update virus definitions
-  web     Create a AVG scan web service  
+  web       Create a AVG scan web service  
   help		Shows a list of commands or help for one command
 
 Run 'avg COMMAND --help' for more information on a command.
