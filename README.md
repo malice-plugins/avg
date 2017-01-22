@@ -40,7 +40,6 @@ Author:
 
 Options:
   --table, -t	       output as Markdown table
-  --web                 create a AVG scan web service
   --callback, -c	    POST results to Malice webhook [$MALICE_ENDPOINT]
   --proxy, -x	       proxy settings for Malice webhook endpoint [$MALICE_PROXY]
   --timeout value       malice plugin timeout (in seconds) (default: 60) [$MALICE_TIMEOUT]    
@@ -50,6 +49,7 @@ Options:
 
 Commands:
   update	Update virus definitions
+  web     Create a AVG scan web service  
   help		Shows a list of commands or help for one command
 
 Run 'avg COMMAND --help' for more information on a command.
@@ -100,7 +100,7 @@ $ docker run --rm -v /path/to/malware:/malware:ro --link elastic malice/avg -t F
 ### Create a AVG scan micro-service :new: :construction:
 
 ```bash
-$ docker run -d -p 3993:3993 malice/avg --web
+$ docker run -d -p 3993:3993 malice/avg web
 
 INFO[0000] web service listening on port :3993
 ```

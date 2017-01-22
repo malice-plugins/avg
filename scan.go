@@ -13,11 +13,11 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/crackcomm/go-clitable"
 	"github.com/fatih/structs"
 	"github.com/gorilla/mux"
 	"github.com/maliceio/go-plugin-utils/database/elasticsearch"
 	"github.com/maliceio/go-plugin-utils/utils"
+	"github.com/maliceio/malice/utils/clitable"
 	"github.com/parnurzeal/gorequest"
 	"github.com/urfave/cli"
 )
@@ -137,7 +137,7 @@ func ParseAVGOutput(avgout string, err error, path string) (ResultsData, error) 
 		log.Errorf("[ERROR] AVG output was: \n%s", avgout)
 		// fmt.Println("[ERROR] colonSeparated was empty: ", colonSeparated)
 		// fmt.Printf("[ERROR] AVG output was: \n%s", avgout)
-		return ResultsData{}, errors.New("Unable to parse AVG output.")
+		return ResultsData{}, errors.New("Unable to parse AVG output")
 	}
 
 	return avg, nil
@@ -211,18 +211,12 @@ func printStatus(resp gorequest.Response, body string, errs []error) {
 
 func webService() {
 	router := mux.NewRouter().StrictSlash(true)
-	router.HandleFunc("/scan", webAvScan)
+	router.HandleFunc("/scan", webAvScan).Methods("POST")
 	log.Info("web service listening on port :3993")
 	log.Fatal(http.ListenAndServe(":3993", router))
 }
 
 func webAvScan(w http.ResponseWriter, r *http.Request) {
-
-	log.Debug("Method: ", r.Method)
-	if r.Method != "POST" {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		fmt.Fprintln(w, "Method Not Allowed")
-	}
 
 	r.ParseMultipartForm(32 << 20)
 	file, header, err := r.FormFile("malware")
@@ -291,10 +285,6 @@ func main() {
 			Usage: "output as Markdown table",
 		},
 		cli.BoolFlag{
-			Name:  "web",
-			Usage: "create a AVG scan web service",
-		},
-		cli.BoolFlag{
 			Name:   "callback, c",
 			Usage:  "POST results back to Malice webhook",
 			EnvVar: "MALICE_ENDPOINT",
@@ -313,9 +303,8 @@ func main() {
 	}
 	app.Commands = []cli.Command{
 		{
-			Name:    "update",
-			Aliases: []string{"u"},
-			Usage:   "Update virus definitions",
+			Name:  "update",
+			Usage: "Update virus definitions",
 			Action: func(c *cli.Context) error {
 				ctx, cancel := context.WithTimeout(context.Background(), time.Duration(c.Int("timeout"))*time.Second)
 				defer cancel()
@@ -323,16 +312,23 @@ func main() {
 				return updateAV(ctx)
 			},
 		},
+		{
+			Name:  "web",
+			Usage: "Create a AVG scan web service",
+			Action: func(c *cli.Context) error {
+				// ctx, cancel := context.WithTimeout(context.Background(), time.Duration(c.Int("timeout"))*time.Second)
+				// defer cancel()
+
+				webService()
+
+				return nil
+			},
+		},
 	}
 	app.Action = func(c *cli.Context) error {
 
 		if c.Bool("verbose") {
 			log.SetLevel(log.DebugLevel)
-		}
-
-		if c.Bool("web") {
-			webService()
-			return nil
 		}
 
 		if c.Args().Present() {
