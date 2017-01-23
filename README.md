@@ -29,7 +29,7 @@ Usage: avg [OPTIONS] COMMAND [arg...]
 
 Malice AVG AntiVirus Plugin
 
-Version: v0.1.0, BuildTime: 20160214
+Version: v0.1.0, BuildTime: 20170122
 
 Author:
   blacktop - <https://github.com/blacktop>
@@ -58,13 +58,13 @@ Sample Output
 
 ```json
 {
-  "avg": {
-    "infected": true,
-    "result": "Virus identified EICAR_Test",
-    "engine": "13.0.3114",
-    "database": "4477/11588",
-    "updated": "20160213"
-  }
+    "avg": {
+        "infected": true,
+        "result": "Virus identified EICAR_Test",              
+        "engine": "13.0.3114",
+        "database": "4477/13807",        
+        "updated": "20170121"
+    }
 }
 ```
 
@@ -76,7 +76,7 @@ Sample Output
 
 | Infected | Result                      | Engine    | Updated  |
 |----------|-----------------------------|-----------|----------|
-| true     | Virus identified EICAR_Test | 13.0.3114 | 20160213 |
+| true     | Virus identified EICAR_Test | 13.0.3114 | 20170122 |
 
 ---
 
