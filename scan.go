@@ -34,6 +34,8 @@ const (
 	category = "av"
 )
 
+var path string
+
 type pluginResults struct {
 	ID   string      `json:"id" structs:"id,omitempty"`
 	Data ResultsData `json:"avast" structs:"avg"`
@@ -53,15 +55,25 @@ type ResultsData struct {
 	Updated  string `json:"updated" structs:"updated"`
 }
 
+func assert(err error) {
+	if err != nil {
+		log.WithFields(log.Fields{
+			"plugin":   name,
+			"category": category,
+			"path":     path,
+		}).Fatal(err)
+	}
+}
+
 // AvScan performs antivirus scan
-func AvScan(path string, timeout int) AVG {
+func AvScan(timeout int) AVG {
 
 	// Give avgd 10 seconds to finish
-	avgdCtx, avgdCancel := context.WithTimeout(context.Background(), time.Duration(10)*time.Second)
+	avgdCtx, avgdCancel := context.WithTimeout(context.Background(), time.Duration(30)*time.Second)
 	defer avgdCancel()
 	// AVG needs to have the daemon started first
 	_, err := utils.RunCommand(avgdCtx, "/etc/init.d/avgd", "start")
-	utils.Assert(err)
+	assert(err)
 
 	var results ResultsData
 
@@ -75,7 +87,7 @@ func AvScan(path string, timeout int) AVG {
 		// If fails try a second time
 		output, err := utils.RunCommand(ctx, "/usr/bin/avgscan", path)
 		results, err = ParseAVGOutput(output, err, path)
-		utils.Assert(err)
+		assert(err)
 	}
 
 	return AVG{
@@ -147,7 +159,7 @@ func ParseAVGOutput(avgout string, err error, path string) (ResultsData, error) 
 // Get Anti-Virus scanner version
 func getAvgVersion() string {
 	versionOut, err := utils.RunCommand(nil, "/usr/bin/avgscan", "-v")
-	utils.Assert(err)
+	assert(err)
 
 	log.Debug("AVG Version: ", versionOut)
 
@@ -176,7 +188,7 @@ func getUpdatedDate() string {
 		return BuildTime
 	}
 	updated, err := ioutil.ReadFile("/opt/malice/UPDATED")
-	utils.Assert(err)
+	assert(err)
 	return string(updated)
 }
 
@@ -246,7 +258,8 @@ func webAvScan(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Do AV scan
-	avg := AvScan(tmpfile.Name(), 60)
+	path = tmpfile.Name()
+	avg := AvScan(120)
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
@@ -297,7 +310,7 @@ func main() {
 		},
 		cli.IntFlag{
 			Name:   "timeout",
-			Value:  60,
+			Value:  120,
 			Usage:  "malice plugin timeout (in seconds)",
 			EnvVar: "MALICE_TIMEOUT",
 		},
@@ -334,13 +347,13 @@ func main() {
 
 		if c.Args().Present() {
 			path, err := filepath.Abs(c.Args().First())
-			utils.Assert(err)
+			assert(err)
 
 			if _, err := os.Stat(path); os.IsNotExist(err) {
-				utils.Assert(err)
+				assert(err)
 			}
 
-			avg := AvScan(path, c.Int("timeout"))
+			avg := AvScan(c.Int("timeout"))
 
 			// upsert into Database
 			elasticsearch.InitElasticSearch(elastic)
@@ -355,7 +368,7 @@ func main() {
 				printMarkDownTable(avg)
 			} else {
 				avgJSON, err := json.Marshal(avg)
-				utils.Assert(err)
+				assert(err)
 				if c.Bool("callback") {
 					request := gorequest.New()
 					if c.Bool("proxy") {
@@ -377,5 +390,5 @@ func main() {
 	}
 
 	err := app.Run(os.Args)
-	utils.Assert(err)
+	assert(err)
 }
