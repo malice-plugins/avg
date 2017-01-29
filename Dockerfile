@@ -2,7 +2,7 @@ FROM debian:jessie
 
 LABEL maintainer "https://github.com/blacktop"
 
-ENV GO_VERSION 1.7.4
+ENV GO_VERSION 1.7.5
 
 # Install Requirements
 COPY . /go/src/github.com/maliceio/malice-avg
@@ -45,5 +45,4 @@ ADD http://www.eicar.org/download/eicar.com.txt /malware/EICAR
 WORKDIR /malware
 
 ENTRYPOINT ["/bin/avscan"]
-
 CMD ["--help"]
