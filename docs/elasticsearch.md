@@ -1,4 +1,5 @@
-# To write results to [ElasticSearch](https://www.elastic.co/products/elasticsearch)
+To write results to [ElasticSearch](https://www.elastic.co/products/elasticsearch)
+==================================================================================
 
 ```bash
 $ docker volume create --name malice

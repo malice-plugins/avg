@@ -69,7 +69,7 @@ func assert(err error) {
 func AvScan(timeout int) AVG {
 
 	// Give avgd 10 seconds to finish
-	avgdCtx, avgdCancel := context.WithTimeout(context.Background(), time.Duration(30)*time.Second)
+	avgdCtx, avgdCancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
 	defer avgdCancel()
 	// AVG needs to have the daemon started first
 	_, err := utils.RunCommand(avgdCtx, "/etc/init.d/avgd", "start")

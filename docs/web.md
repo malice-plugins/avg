@@ -1,4 +1,5 @@
-# Create a AVG scan micro-service :new: :construction:
+Create a AVG scan micro-service :new: :construction:
+====================================================
 
 ```bash
 $ docker run -d -p 3993:3993 malice/avg web
@@ -6,7 +7,8 @@ $ docker run -d -p 3993:3993 malice/avg web
 INFO[0000] web service listening on port :3993
 ```
 
-## Now you can perform scans like so
+Now you can perform scans like so
+---------------------------------
 
 ```bash
 $ http -f localhost:3993/scan malware@/path/to/evil/malware

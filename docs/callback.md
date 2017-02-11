@@ -1,4 +1,5 @@
-# POST results to a webhook
+POST results to a webhook
+=========================
 
 ```bash
 $ docker run -v `pwd`:/malware:ro --rm \
