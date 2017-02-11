@@ -320,10 +320,7 @@ func main() {
 			Name:  "update",
 			Usage: "Update virus definitions",
 			Action: func(c *cli.Context) error {
-				ctx, cancel := context.WithTimeout(context.Background(), time.Duration(c.Int("timeout"))*time.Second)
-				defer cancel()
-
-				return updateAV(ctx)
+				return updateAV(nil)
 			},
 		},
 		{
