@@ -1,5 +1,5 @@
 #### AVG
 | Infected      | Result      | Engine      | Updated      |
 |:-------------:|:-----------:|:-----------:|:------------:|
-| false |  |  |  |
+| true | Virus identified EICAR_Test | 13.0.3114 | 20170704 |
 
