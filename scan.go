@@ -87,13 +87,26 @@ func AvScan(timeout int) AVG {
 	defer cancel()
 
 	output, err := utils.RunCommand(ctx, "/usr/bin/avgscan", path)
+	log.WithFields(log.Fields{
+		"plugin":   name,
+		"category": category,
+		"path":     path,
+	}).Debug("AVG output: ", output)
 	assert(err)
-	results, err = ParseAVGOutput(output, err, path)
+
+	results, err = ParseAVGOutput(output, nil, path)
 
 	if err != nil {
 		// If fails try a second time
 		output, err := utils.RunCommand(ctx, "/usr/bin/avgscan", path)
-		results, err = ParseAVGOutput(output, err, path)
+		log.WithFields(log.Fields{
+			"plugin":   name,
+			"category": category,
+			"path":     path,
+		}).Debug("AVG output: ", output)
+		assert(err)
+
+		results, err = ParseAVGOutput(output, nil, path)
 		assert(err)
 	}
 
@@ -204,7 +217,14 @@ func updateAV(ctx context.Context) error {
 	// AVG needs to have the daemon started first
 	exec.Command("/etc/init.d/avgd", "start").Output()
 
-	fmt.Println(utils.RunCommand(nil, "avgupdate"))
+	output, err := utils.RunCommand(nil, "avgupdate")
+	log.WithFields(log.Fields{
+		"plugin":   name,
+		"category": category,
+		"path":     path,
+	}).Debug("AVG update: ", output)
+	assert(err)
+
 	// Update UPDATED file
 	t := time.Now().Format("20060102")
 	err := ioutil.WriteFile("/opt/malice/UPDATED", []byte(t), 0644)
