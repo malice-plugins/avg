@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"html/template"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -16,9 +18,8 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/fatih/structs"
 	"github.com/gorilla/mux"
-	"github.com/maliceio/go-plugin-utils/database/elasticsearch"
-	"github.com/maliceio/go-plugin-utils/utils"
-	"github.com/maliceio/malice/utils/clitable"
+	"github.com/malice-plugins/go-plugin-utils/database/elasticsearch"
+	"github.com/malice-plugins/go-plugin-utils/utils"
 	"github.com/parnurzeal/gorequest"
 	"github.com/urfave/cli"
 )
@@ -53,6 +54,7 @@ type ResultsData struct {
 	Engine   string `json:"engine" structs:"engine"`
 	Database string `json:"database" structs:"database"`
 	Updated  string `json:"updated" structs:"updated"`
+	MarkDown string `json:"markdown,omitempty" structs:"markdown,omitempty"`
 }
 
 func assert(err error) {
@@ -204,18 +206,17 @@ func updateAV(ctx context.Context) error {
 	return err
 }
 
-func printMarkDownTable(avg AVG) {
+func generateMarkDownTable(a AVG) string {
+	var tplOut bytes.Buffer
 
-	fmt.Println("#### AVG")
-	table := clitable.New([]string{"Infected", "Result", "Engine", "Updated"})
-	table.AddRow(map[string]interface{}{
-		"Infected": avg.Results.Infected,
-		"Result":   avg.Results.Result,
-		"Engine":   avg.Results.Engine,
-		"Updated":  avg.Results.Updated,
-	})
-	table.Markdown = true
-	table.Print()
+	t := template.Must(template.New("avg").Parse(tpl))
+
+	err := t.Execute(&tplOut, a)
+	if err != nil {
+		log.Println("executing template:", err)
+	}
+
+	return tplOut.String()
 }
 
 func printStatus(resp gorequest.Response, body string, errs []error) {
@@ -249,6 +250,7 @@ func webAvScan(w http.ResponseWriter, r *http.Request) {
 	defer os.Remove(tmpfile.Name()) // clean up
 
 	data, err := ioutil.ReadAll(file)
+	assert(err)
 
 	if _, err = tmpfile.Write(data); err != nil {
 		log.Fatal(err)
@@ -353,6 +355,7 @@ func main() {
 			}
 
 			avg := AvScan(c.Int("timeout"))
+			avg.Results.MarkDown = generateMarkDownTable(avg)
 
 			// upsert into Database
 			elasticsearch.InitElasticSearch(elastic)
@@ -364,8 +367,9 @@ func main() {
 			})
 
 			if c.Bool("table") {
-				printMarkDownTable(avg)
+				fmt.Println(avg.Results.MarkDown)
 			} else {
+				avg.Results.MarkDown = ""
 				avgJSON, err := json.Marshal(avg)
 				assert(err)
 				if c.Bool("callback") {

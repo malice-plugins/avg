@@ -2,10 +2,10 @@ FROM debian:jessie
 
 LABEL maintainer "https://github.com/blacktop"
 
-ENV GO_VERSION 1.7.5
+ENV GO_VERSION 1.8.3
 
 # Install Requirements
-COPY . /go/src/github.com/maliceio/malice-avg
+COPY . /go/src/github.com/malice-plugins/malice-avg
 RUN buildDeps='ca-certificates \
                build-essential \
                mercurial \
@@ -26,7 +26,7 @@ RUN buildDeps='ca-certificates \
   && tar -C /usr/local -xzf /tmp/go.tar.gz \
   && export PATH=$PATH:/usr/local/go/bin \
   && echo "===> Building avscan Go binary..." \
-  && cd /go/src/github.com/maliceio/malice-avg \
+  && cd /go/src/github.com/malice-plugins/malice-avg \
 	&& export GOPATH=/go \
   && go version \
 	&& go get \
