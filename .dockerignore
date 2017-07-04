@@ -13,4 +13,3 @@ circle.yml
 CHANGELOG.md
 Makefile
 run.sh
-results.json

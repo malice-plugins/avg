@@ -24,18 +24,19 @@ import (
 	"github.com/urfave/cli"
 )
 
-// Version stores the plugin's version
-var Version string
+var (
+	// Version stores the plugin's version
+	Version string
+	// BuildTime stores the plugin's build time
+	BuildTime string
 
-// BuildTime stores the plugin's build time
-var BuildTime string
+	path string
+)
 
 const (
 	name     = "avg"
 	category = "av"
 )
-
-var path string
 
 type pluginResults struct {
 	ID   string      `json:"id" structs:"id,omitempty"`
@@ -86,6 +87,7 @@ func AvScan(timeout int) AVG {
 	defer cancel()
 
 	output, err := utils.RunCommand(ctx, "/usr/bin/avgscan", path)
+	assert(err)
 	results, err = ParseAVGOutput(output, err, path)
 
 	if err != nil {
