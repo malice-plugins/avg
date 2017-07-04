@@ -59,11 +59,14 @@ type ResultsData struct {
 
 func assert(err error) {
 	if err != nil {
-		log.WithFields(log.Fields{
-			"plugin":   name,
-			"category": category,
-			"path":     path,
-		}).Fatal(err)
+		// AVG exits with error status 5 if it finds a virus
+		if err.Error() != "exit status 5" {
+			log.WithFields(log.Fields{
+				"plugin":   name,
+				"category": category,
+				"path":     path,
+			}).Fatal(err)
+		}
 	}
 }
 
