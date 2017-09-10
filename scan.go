@@ -228,8 +228,9 @@ func updateAV(ctx context.Context) error {
 		"category": category,
 		"path":     path,
 	}).Debug("AVG update: ", output)
-	assert(err)
-
+	if err.Error() != "exit status 2" {
+		assert(err)
+	}
 	// Update UPDATED file
 	t := time.Now().Format("20060102")
 	err = ioutil.WriteFile("/opt/malice/UPDATED", []byte(t), 0644)
