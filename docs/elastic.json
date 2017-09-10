@@ -1,5 +1,5 @@
 {
-  "took": 45,
+  "took": 44,
   "timed_out": false,
   "_shards": {
     "total": 1,
@@ -13,22 +13,22 @@
       {
         "_index": "malice",
         "_type": "samples",
-        "_id": "AV0PndXnHeD2UFg9pRzW",
+        "_id": "AV5tS88Sd_lkAmpJIP8q",
         "_score": 1,
         "_source": {
           "plugins": {
             "av": {
               "avg": {
-                "database": "4767/14650",
+                "database": "4767/14953",
                 "engine": "13.0.3114",
                 "infected": true,
-                "markdown": "#### AVG\n| Infected      | Result      | Engine      | Updated      |\n|:-------------:|:-----------:|:-----------:|:------------:|\n| true | Virus identified EICAR_Test | 13.0.3114 | 20170704 |\n",
+                "markdown": "#### AVG\n| Infected      | Result      | Engine      | Updated      |\n|:-------------:|:-----------:|:-----------:|:------------:|\n| true | Virus identified EICAR_Test | 13.0.3114 | 20170910 |\n",
                 "result": "Virus identified EICAR_Test",
-                "updated": "20170704"
+                "updated": "20170910"
               }
             }
           },
-          "scan_date": "2017-07-04T21:59:48.447067207Z"
+          "scan_date": "2017-09-10T19:37:18.346348665Z"
         }
       }
     ]
