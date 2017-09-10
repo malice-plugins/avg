@@ -10,7 +10,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -213,10 +212,16 @@ func getUpdatedDate() string {
 }
 
 func updateAV(ctx context.Context) error {
-	fmt.Println("Updating AVG...")
-	// AVG needs to have the daemon started first
-	exec.Command("/etc/init.d/avgd", "start").Output()
+	fmt.Println("AVG needs to have the daemon started first...")
+	daemon, err := utils.RunCommand(nil, "/etc/init.d/avgd", "start")
+	log.WithFields(log.Fields{
+		"plugin":   name,
+		"category": category,
+		"path":     path,
+	}).Debug("avgd daemon: ", daemon)
+	assert(err)
 
+	fmt.Println("Updating AVG...")
 	output, err := utils.RunCommand(nil, "avgupdate")
 	log.WithFields(log.Fields{
 		"plugin":   name,
