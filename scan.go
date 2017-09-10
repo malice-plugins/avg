@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -10,6 +11,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -213,23 +215,45 @@ func getUpdatedDate() string {
 
 func updateAV(ctx context.Context) error {
 	fmt.Println("AVG needs to have the daemon started first...")
-	daemon, err := utils.RunCommand(nil, "/etc/init.d/avgd", "start")
-	log.WithFields(log.Fields{
-		"plugin":   name,
-		"category": category,
-		"path":     path,
-	}).Debug("avgd daemon: ", daemon)
-	assert(err)
+	daemon := exec.Command("/etc/init.d/avgd", "start")
+	cmdReader, err := daemon.StdoutPipe()
+	scanner := bufio.NewScanner(cmdReader)
+	go func() {
+		for scanner.Scan() {
+			fmt.Printf("/etc/init.d/avgd start | %s\n", scanner.Text())
+		}
+	}()
+	err = daemon.Start()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Error starting daemon", err)
+		os.Exit(1)
+	}
+
+	err = daemon.Wait()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Error waiting for daemon", err)
+		os.Exit(1)
+	}
 
 	fmt.Println("Updating AVG...")
-	output, err := utils.RunCommand(nil, "avgupdate")
-	log.WithFields(log.Fields{
-		"plugin":   name,
-		"category": category,
-		"path":     path,
-	}).Debug("AVG update: ", output)
-	if err.Error() != "exit status 2" {
-		assert(err)
+	avgupdate := exec.Command("avgupdate")
+	cmdReader, err = avgupdate.StdoutPipe()
+	scanner = bufio.NewScanner(cmdReader)
+	go func() {
+		for scanner.Scan() {
+			fmt.Printf("avgupdate | %s\n", scanner.Text())
+		}
+	}()
+	err = avgupdate.Start()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Error starting avgupdate", err)
+		os.Exit(1)
+	}
+
+	err = avgupdate.Wait()
+	if err != nil && err.Error() != "exit status 2" {
+		fmt.Fprintln(os.Stderr, "Error waiting for avgupdate", err)
+		os.Exit(1)
 	}
 	// Update UPDATED file
 	t := time.Now().Format("20060102")
@@ -353,6 +377,9 @@ func main() {
 			Name:  "update",
 			Usage: "Update virus definitions",
 			Action: func(c *cli.Context) error {
+				if c.GlobalBool("verbose") {
+					log.SetLevel(log.DebugLevel)
+				}
 				return updateAV(nil)
 			},
 		},
@@ -362,7 +389,9 @@ func main() {
 			Action: func(c *cli.Context) error {
 				// ctx, cancel := context.WithTimeout(context.Background(), time.Duration(c.Int("timeout"))*time.Second)
 				// defer cancel()
-
+				if c.GlobalBool("verbose") {
+					log.SetLevel(log.DebugLevel)
+				}
 				webService()
 
 				return nil
