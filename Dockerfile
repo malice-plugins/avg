@@ -37,7 +37,7 @@ RUN buildDeps='ca-certificates \
   && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /go /usr/local/go
 
 # Update AVG Definitions
-RUN /etc/init.d/avgd restart && avgupdate
+RUN mkdir -p /opt/malice && /etc/init.d/avgd restart && avgupdate
 
 # Add EICAR Test Virus File to malware folder
 ADD http://www.eicar.org/download/eicar.com.txt /malware/EICAR
