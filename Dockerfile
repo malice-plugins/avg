@@ -2,16 +2,21 @@ FROM debian:jessie
 
 LABEL maintainer "https://github.com/blacktop"
 
-ENV GO_VERSION 1.8.3
+LABEL malice.plugin.repository = "https://github.com/malice-plugins/avg.git"
+LABEL malice.plugin.category="av"
+LABEL malice.plugin.mime="*"
+LABEL malice.plugin.docker.engine="*"
+
+ENV GO_VERSION 1.10.3
 
 # Install Requirements
 COPY . /go/src/github.com/malice-plugins/malice-avg
 RUN buildDeps='ca-certificates \
-               build-essential \
-               mercurial \
-               git-core \
-               unzip \
-               curl' \
+  build-essential \
+  mercurial \
+  git-core \
+  unzip \
+  curl' \
   && apt-get update -qq \
   && apt-get install -yq $buildDeps libc6-i386 --no-install-recommends \
   && echo "===> Install AVG..." \
@@ -27,9 +32,9 @@ RUN buildDeps='ca-certificates \
   && export PATH=$PATH:/usr/local/go/bin \
   && echo "===> Building avscan Go binary..." \
   && cd /go/src/github.com/malice-plugins/malice-avg \
-	&& export GOPATH=/go \
+  && export GOPATH=/go \
   && go version \
-	&& go get \
+  && go get \
   && go build -ldflags "-X main.Version=$(cat VERSION) -X main.BuildTime=$(date -u +%Y%m%d)" -o /bin/avscan \
   && echo "===> Clean up unnecessary files..." \
   && apt-get purge -y --auto-remove $buildDeps \

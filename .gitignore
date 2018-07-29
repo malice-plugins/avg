@@ -25,3 +25,5 @@ _testmain.go
 
 *.bu
 .circleci/build_num
+test/malware
+test/not.malware
