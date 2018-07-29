@@ -1,9 +1,9 @@
 {
   "avg": {
     "infected": true,
-    "result": "Virus identified EICAR_Test",
+    "result": "Found Win32/DH{CGE?}",
     "engine": "13.0.3114",
-    "database": "4767/14953",
-    "updated": "20170910"
+    "database": "4793/15846",
+    "updated": "20180727"
   }
 }

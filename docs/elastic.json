@@ -1,9 +1,10 @@
 {
-  "took": 44,
+  "took": 37,
   "timed_out": false,
   "_shards": {
     "total": 1,
     "successful": 1,
+    "skipped": 0,
     "failed": 0
   },
   "hits": {
@@ -13,22 +14,22 @@
       {
         "_index": "malice",
         "_type": "samples",
-        "_id": "AV5tS88Sd_lkAmpJIP8q",
+        "_id": "5xqg42QBPLUdIgq5NuL4",
         "_score": 1,
         "_source": {
           "plugins": {
             "av": {
               "avg": {
-                "database": "4767/14953",
+                "database": "4793/15846",
                 "engine": "13.0.3114",
                 "infected": true,
-                "markdown": "#### AVG\n| Infected      | Result      | Engine      | Updated      |\n|:-------------:|:-----------:|:-----------:|:------------:|\n| true | Virus identified EICAR_Test | 13.0.3114 | 20170910 |\n",
-                "result": "Virus identified EICAR_Test",
-                "updated": "20170910"
+                "markdown": "#### AVG\n| Infected      | Result      | Engine      | Updated      |\n|:-------------:|:-----------:|:-----------:|:------------:|\n| true | Found Win32/DH{CGE?} | 13.0.3114 | 20180727 |\n",
+                "result": "Found Win32/DH{CGE?}",
+                "updated": "20180727"
               }
             }
           },
-          "scan_date": "2017-09-10T19:37:18.346348665Z"
+          "scan_date": "2018-07-29T01:21:25.233032738Z"
         }
       }
     ]
