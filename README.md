@@ -53,7 +53,7 @@ Run 'avg COMMAND --help' for more information on a command.
 
 ## Sample Output
 
-### JSON:
+### [JSON](https://github.com/malice-plugins/avg/blob/master/docs/results.json)
 
 ```json
 {
@@ -67,7 +67,7 @@ Run 'avg COMMAND --help' for more information on a command.
 }
 ```
 
-### Markdown Table:
+### [Markdown](https://github.com/malice-plugins/avg/blob/master/docs/SAMPLE.md)
 
 ---
 
