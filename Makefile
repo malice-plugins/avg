@@ -3,7 +3,7 @@ ORG=malice
 NAME=avg
 CATEGORY=av
 VERSION=$(shell cat VERSION)
-MALWARE=test/malware
+MALWARE=tests/malware
 
 all: build size tag test test_markdown
 
@@ -43,9 +43,9 @@ endif
 
 .PHONY: malware
 malware:
-ifeq (,$(wildcard test/malware))
+ifeq (,$(wildcard $(MALWARE)))
 	wget https://github.com/maliceio/malice-av/raw/master/samples/befb88b89c2eb401900a68e9f5b78764203f2b48264fcc3f7121bf04a57fd408 -O $(MALWARE)
-	cd test; echo "TEST" > not.malware
+	cd tests; echo "TEST" > not.malware
 endif
 
 gotest:
@@ -54,7 +54,7 @@ gotest:
 
 avtest:
 	@echo "===> ${NAME} EICAR Test"
-	@docker run --init --rm --entrypoint=sh $(ORG)/$(NAME):$(VERSION) -c "/etc/init.d/avgd start > /dev/null 2>&1 && /usr/bin/avgscan /malware/EICAR" > test/av_scan.out || true
+	@docker run --init --rm --entrypoint=sh $(ORG)/$(NAME):$(VERSION) -c "/etc/init.d/avgd start > /dev/null 2>&1 && /usr/bin/avgscan /malware/EICAR" > tests/av_scan.out || true
 
 update:
 	@docker run --init --rm $(ORG)/$(NAME):$(VERSION) -V update

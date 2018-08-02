@@ -18,13 +18,20 @@ RUN buildDeps='ca-certificates \
   unzip \
   curl' \
   && apt-get update -qq \
-  && apt-get install -yq $buildDeps libc6-i386 --no-install-recommends \
+  && apt-get install -yq $buildDeps libc6-i386 lib32z1 --no-install-recommends \
   && echo "===> Install AVG..." \
   && curl -Ls http://download.avgfree.com/filedir/inst/avg2013flx-r3118-a6926.i386.deb > /tmp/avg.deb \
   && dpkg -i /tmp/avg.deb \
   && /etc/init.d/avgd restart \
   && avgcfgctl -w UpdateVir.sched.Task.Disabled=true \
-  && avgcfgctl -w Default.setup.daemonize=false   \
+  && avgcfgctl -w Default.setup.daemonize=false \
+  && avgcfgctl -w Default.setup.features.antispam=false \
+  && avgcfgctl -w Default.setup.features.oad=false \
+  && avgcfgctl -w Default.setup.features.scheduler=false \
+  && avgcfgctl -w Default.setup.features.tcpd=false \
+  && sed -i 's/Severity=INFO/Severity=None/g' /opt/avg/av/cfg/scand.ini \
+  && sed -i 's/Severity=INFO/Severity=None/g' /opt/avg/av/cfg/tcpd.ini \
+  && sed -i 's/Severity=INFO/Severity=None/g' /opt/avg/av/cfg/wd.ini \
   && echo "===> Install Go..." \
   && cd /tmp \
   && curl -Ls https://storage.googleapis.com/golang/go$GO_VERSION.linux-amd64.tar.gz > /tmp/go.tar.gz \
