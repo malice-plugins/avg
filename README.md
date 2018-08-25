@@ -1,6 +1,6 @@
 # avg
 
-[![Circle CI](https://circleci.com/gh/malice-plugins/avg.png?style=shield)](https://circleci.com/gh/malice-plugins/avg) [![License](http://img.shields.io/:license-mit-blue.svg)](http://doge.mit-license.org) [![Docker Stars](https://img.shields.io/docker/stars/malice/avg.svg)](https://hub.docker.com/r/malice/avg/) [![Docker Pulls](https://img.shields.io/docker/pulls/malice/avg.svg)](https://hub.docker.com/r/malice/avg/) [![Docker Image](https://img.shields.io/badge/docker%20image-686MB-blue.svg)](https://hub.docker.com/r/malice/avg/)
+[![Circle CI](https://circleci.com/gh/malice-plugins/avg.png?style=shield)](https://circleci.com/gh/malice-plugins/avg) [![License](http://img.shields.io/:license-mit-blue.svg)](http://doge.mit-license.org) [![Docker Stars](https://img.shields.io/docker/stars/malice/avg.svg)](https://hub.docker.com/r/malice/avg/) [![Docker Pulls](https://img.shields.io/docker/pulls/malice/avg.svg)](https://hub.docker.com/r/malice/avg/) [![Docker Image](https://img.shields.io/badge/docker%20image-687MB-blue.svg)](https://hub.docker.com/r/malice/avg/)
 
 This repository contains a **Dockerfile** of [avg](http://www.avg.net/lang/en/) for [Docker](https://www.docker.io/)'s [trusted build](https://index.docker.io/u/malice/avg/) published to the public [DockerHub](https://index.docker.io/).
 
