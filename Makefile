@@ -12,7 +12,7 @@ all: build size tag test_all
 
 .PHONY: build
 build:
-	cd $(VERSION); docker build -t $(ORG)/$(NAME):$(VERSION) .
+	docker build -t $(ORG)/$(NAME):$(VERSION) .
 
 .PHONY: size
 size:
@@ -74,9 +74,9 @@ test: malware
 .PHONY: test_elastic
 test_elastic: start_elasticsearch malware
 	@echo "===> ${NAME} test_elastic found"
-	docker run --rm --link elasticsearch -e MALICE_ELASTICSEARCH=elasticsearch -v $(PWD):/malware $(ORG)/$(NAME):$(VERSION) -V $(MALWARE)
-	# @echo "===> ${NAME} test_elastic NOT found"
-	# docker run --rm --link elasticsearch -e MALICE_ELASTICSEARCH=elasticsearch $(ORG)/$(NAME):$(VERSION) -V --api ${MALICE_VT_API} lookup $(MISSING_HASH)
+	docker run --rm --link elasticsearch -e MALICE_ELASTICSEARCH_URL=http://elasticsearch:9200 -v $(PWD):/malware $(ORG)/$(NAME):$(VERSION) -V $(MALWARE)
+	@echo "===> ${NAME} test_elastic NOT found"
+	docker run --rm --link elasticsearch -e MALICE_ELASTICSEARCH_URL=http://elasticsearch:9200 -v $(PWD):/malware $(ORG)/$(NAME):$(VERSION) -V $(NOT_MALWARE)
 	http localhost:9200/malice/_search | jq . > docs/elastic.json
 
 .PHONY: test_markdown
@@ -91,6 +91,9 @@ test_web: malware stop
 	@docker run --init -d --name $(NAME) -p 3993:3993 $(ORG)/$(NAME):$(VERSION) -V web
 	http -f localhost:3993/scan malware@$(MALWARE)
 	http -f localhost:3993/scan malware@$(NOT_MALWARE)
+	@echo "===> Stopping web service"
+	@docker logs $(NAME)
+	@docker rm -f $(NAME)
 
 .PHONY: stop
 stop:
