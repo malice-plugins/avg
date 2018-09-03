@@ -1,5 +1,5 @@
 {
-  "took": 41,
+  "took": 44,
   "timed_out": false,
   "_shards": {
     "total": 1,
@@ -8,13 +8,13 @@
     "failed": 0
   },
   "hits": {
-    "total": 1,
+    "total": 2,
     "max_score": 1,
     "hits": [
       {
         "_index": "malice",
         "_type": "samples",
-        "_id": "RliqbmUBlZJiMKPsbNZ9",
+        "_id": "VTTPnGUBvF5H5YqVySHx",
         "_score": 1,
         "_source": {
           "plugins": {
@@ -29,7 +29,28 @@
               }
             }
           },
-          "scan_date": "2018-08-25T01:19:47.30992571Z"
+          "scan_date": "2018-09-03T00:23:08.008439214Z"
+        }
+      },
+      {
+        "_index": "malice",
+        "_type": "samples",
+        "_id": "VjTQnGUBvF5H5YqVKyEU",
+        "_score": 1,
+        "_source": {
+          "plugins": {
+            "av": {
+              "avg": {
+                "database": "4793/15883",
+                "engine": "13.0.3114",
+                "infected": false,
+                "markdown": "#### AVG\n| Infected      | Result      | Engine      | Updated      |\n|:-------------:|:-----------:|:-----------:|:------------:|\n| false |  | 13.0.3114 | 20180814 |\n",
+                "result": "",
+                "updated": "20180814"
+              }
+            }
+          },
+          "scan_date": "2018-09-03T00:23:32.88220572Z"
         }
       }
     ]
