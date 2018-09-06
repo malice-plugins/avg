@@ -1,6 +1,6 @@
 # malice-avg
 
-[![Circle CI](https://circleci.com/gh/malice-plugins/avg.png?style=shield)](https://circleci.com/gh/malice-plugins/avg) [![License](http://img.shields.io/:license-mit-blue.svg)](http://doge.mit-license.org) [![Docker Stars](https://img.shields.io/docker/stars/malice/avg.svg)](https://hub.docker.com/r/malice/avg/) [![Docker Pulls](https://img.shields.io/docker/pulls/malice/avg.svg)](https://hub.docker.com/r/malice/avg/) [![Docker Image](https://img.shields.io/badge/docker%20image-692MB-blue.svg)](https://hub.docker.com/r/malice/avg/)
+[![Circle CI](https://circleci.com/gh/malice-plugins/avg.png?style=shield)](https://circleci.com/gh/malice-plugins/avg) [![License](http://img.shields.io/:license-mit-blue.svg)](http://doge.mit-license.org) [![Docker Stars](https://img.shields.io/docker/stars/malice/avg.svg)](https://hub.docker.com/r/malice/avg/) [![Docker Pulls](https://img.shields.io/docker/pulls/malice/avg.svg)](https://hub.docker.com/r/malice/avg/) [![Docker Image](https://img.shields.io/badge/docker%20image-684MB-blue.svg)](https://hub.docker.com/r/malice/avg/)
 
 Malice AVG AntiVirus
 
