@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -60,6 +59,7 @@ type ResultsData struct {
 	Database string `json:"database" structs:"database"`
 	Updated  string `json:"updated" structs:"updated"`
 	MarkDown string `json:"markdown,omitempty" structs:"markdown,omitempty"`
+	Error    string `json:"error,omitempty" structs:"error,omitempty"`
 }
 
 func assert(err error) {
@@ -78,55 +78,47 @@ func assert(err error) {
 // AvScan performs antivirus scan
 func AvScan(timeout int) AVG {
 
-	// Give avgd 10 seconds to finish
-	avgdCtx, avgdCancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
-	defer avgdCancel()
-	// AVG needs to have the daemon started first
-	_, err := utils.RunCommand(avgdCtx, "/etc/init.d/avgd", "start")
-	assert(err)
-
-	var results ResultsData
+	var output string
+	var avErr error
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
 	defer cancel()
 
-	output, err := utils.RunCommand(ctx, "/usr/bin/avgscan", path)
+	// AVG needs to have the daemon started first
+	avgd := exec.CommandContext(ctx, "/etc/init.d/avgd", "start")
+	_, err := avgd.Output()
+	assert(err)
+	defer avgd.Process.Kill()
+
+	time.Sleep(3 * time.Second)
+
+	log.Debug("running /usr/bin/avgscan")
+	output, avErr = utils.RunCommand(ctx, "/usr/bin/avgscan", path)
+	if err != nil {
+		// If fails try a second time
+		time.Sleep(7 * time.Second)
+		log.Debug("re-running /usr/bin/avgscan")
+		output, avErr = utils.RunCommand(ctx, "/usr/bin/avgscan", path)
+	}
+
+	return AVG{Results: ParseAVGOutput(output, avErr, path)}
+}
+
+// ParseAVGOutput convert avg output into ResultsData struct
+func ParseAVGOutput(avgout string, err error, path string) ResultsData {
+
 	log.WithFields(log.Fields{
 		"plugin":   name,
 		"category": category,
 		"path":     path,
-	}).Debug("AVG output: ", output)
-	assert(err)
-
-	results, err = ParseAVGOutput(output, nil, path)
+	}).Debug("AVG output: ", avgout)
 
 	if err != nil {
-		// If fails try a second time
-		output, err := utils.RunCommand(ctx, "/usr/bin/avgscan", path)
-		log.WithFields(log.Fields{
-			"plugin":   name,
-			"category": category,
-			"path":     path,
-		}).Debug("AVG output: ", output)
-		assert(err)
-
-		results, err = ParseAVGOutput(output, nil, path)
-		assert(err)
+		// ignore exit code 5 as that just means a virus was found
+		if err.Error() != "exit status 5" {
+			return ResultsData{Error: err.Error()}
+		}
 	}
-
-	return AVG{
-		Results: results,
-	}
-}
-
-// ParseAVGOutput convert avg output into ResultsData struct
-func ParseAVGOutput(avgout string, err error, path string) (ResultsData, error) {
-
-	if err != nil {
-		return ResultsData{}, err
-	}
-
-	log.Debug("AVG Output: ", avgout)
 
 	avg := ResultsData{
 		Infected: false,
@@ -174,10 +166,10 @@ func ParseAVGOutput(avgout string, err error, path string) (ResultsData, error) 
 		log.Errorf("[ERROR] AVG output was: \n%s", avgout)
 		// fmt.Println("[ERROR] colonSeparated was empty: ", colonSeparated)
 		// fmt.Printf("[ERROR] AVG output was: \n%s", avgout)
-		return ResultsData{}, errors.New("Unable to parse AVG output")
+		return ResultsData{Error: "Unable to parse AVG output"}
 	}
 
-	return avg, nil
+	return avg
 }
 
 // Get Anti-Virus scanner version
@@ -217,51 +209,19 @@ func getUpdatedDate() string {
 }
 
 func updateAV(ctx context.Context) error {
-	fmt.Println("AVG needs to have the daemon started first...")
-	daemon := exec.Command("/etc/init.d/avgd", "start")
-	cmdReader, err := daemon.StdoutPipe()
-	scanner := bufio.NewScanner(cmdReader)
-	go func() {
-		for scanner.Scan() {
-			fmt.Printf("/etc/init.d/avgd start | %s\n", scanner.Text())
-		}
-	}()
-	err = daemon.Start()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error starting daemon", err)
-		os.Exit(1)
-	}
-
-	err = daemon.Wait()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error waiting for daemon", err)
-		os.Exit(1)
-	}
-
 	fmt.Println("Updating AVG...")
-	avgupdate := exec.Command("avgupdate")
-	cmdReader, err = avgupdate.StdoutPipe()
-	scanner = bufio.NewScanner(cmdReader)
-	go func() {
-		for scanner.Scan() {
-			fmt.Printf("avgupdate | %s\n", scanner.Text())
-		}
-	}()
-	err = avgupdate.Start()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error starting avgupdate", err)
-		os.Exit(1)
-	}
+	// AVG needs to have the daemon started first
+	avgd := exec.Command("/etc/init.d/avgd", "start")
+	_, err := avgd.Output()
+	assert(err)
+	defer avgd.Process.Kill()
 
-	err = avgupdate.Wait()
-	if err != nil && err.Error() != "exit status 2" {
-		fmt.Fprintln(os.Stderr, "Error waiting for avgupdate", err)
-		os.Exit(1)
-	}
+	time.Sleep(3 * time.Second)
+
+	fmt.Println(utils.RunCommand(ctx, "avgupdate"))
 	// Update UPDATED file
 	t := time.Now().Format("20060102")
-	err = ioutil.WriteFile("/opt/malice/UPDATED", []byte(t), 0644)
-	return err
+	return ioutil.WriteFile("/opt/malice/UPDATED", []byte(t), 0644)
 }
 
 func generateMarkDownTable(a AVG) string {

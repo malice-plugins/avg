@@ -4,7 +4,7 @@
 
 Malice AVG AntiVirus
 
-> This repository contains a **Dockerfile** of [avg](http://www.avg.net/lang/en/) for [Docker](https://www.docker.io/)'s [trusted build](https://index.docker.io/u/malice/avg/) published to the public [DockerHub](https://index.docker.io/).
+> This repository contains a **Dockerfile** of [avg](http://www.avg.net/lang/en/).
 
 ---
 
