@@ -151,7 +151,12 @@ func ParseAVGOutput(avgout string, err error, path string) ResultsData {
 			}
 			if strings.Contains(line, path) {
 				pathVirusString := strings.Split(line, "  ")
-				avg.Result = strings.TrimSpace(pathVirusString[1])
+				if len(pathVirusString) >= 2 {
+					avg.Result = strings.TrimSpace(pathVirusString[1])
+				} else {
+					log.Error("[ERROR] could not extract virus string from pathVirusString.")
+					log.Errorf("[ERROR] pathVirusString was: \n%s", pathVirusString)
+				}
 			}
 		}
 	}
