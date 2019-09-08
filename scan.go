@@ -12,6 +12,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -39,6 +40,9 @@ var (
 	path string
 	// es is the elasticsearch database object
 	es elasticsearch.Database
+
+	// mutex for daemon handling
+	daemonMutex sync.RWMutex
 )
 
 type pluginResults struct {
@@ -75,6 +79,21 @@ func assert(err error) {
 	}
 }
 
+// Starts the avg deamon. required for scans
+func StartAVGDaemon(ctx context.Context) {
+	// use restart as the daemon could be hanging or smth
+	log.Debug("Executing avgd start")
+	clamd := exec.CommandContext(ctx, "/etc/init.d/avgd", "restart")
+	_, err := clamd.Output()
+
+	if err != nil {
+		daemonMutex.Unlock()
+		assert(err)
+	}
+
+	log.Debug("daemon started")
+}
+
 // AvScan performs antivirus scan
 func AvScan(timeout int) AVG {
 
@@ -85,21 +104,18 @@ func AvScan(timeout int) AVG {
 	defer cancel()
 
 	// AVG needs to have the daemon started first
-	avgd := exec.CommandContext(ctx, "/etc/init.d/avgd", "start")
-	_, err := avgd.Output()
-	assert(err)
-	defer avgd.Process.Kill()
-
-	time.Sleep(3 * time.Second)
-
-	log.Debug("running /usr/bin/avgscan")
-	output, avErr = utils.RunCommand(ctx, "/usr/bin/avgscan", path)
-	if err != nil {
-		// If fails try a second time
-		time.Sleep(7 * time.Second)
-		log.Debug("re-running /usr/bin/avgscan")
-		output, avErr = utils.RunCommand(ctx, "/usr/bin/avgscan", path)
+	daemonMutex.Lock()
+	statusOutput, _ := utils.RunCommand(ctx, "/etc/init.d/avgd", "status")
+	if !strings.Contains(statusOutput, "is running") {
+		log.Info("AVG daemon is down. Starting now...")
+		StartAVGDaemon(ctx)
 	}
+	daemonMutex.Unlock()
+
+	// get readlock for scan => prevent daemon restart while scanning
+	daemonMutex.RLock()
+	output, avErr = utils.RunCommand(ctx, "/usr/bin/avgscan", path)
+	daemonMutex.RUnlock()
 
 	return AVG{Results: ParseAVGOutput(output, avErr, path)}
 }
@@ -135,7 +151,12 @@ func ParseAVGOutput(avgout string, err error, path string) ResultsData {
 			}
 			if strings.Contains(line, path) {
 				pathVirusString := strings.Split(line, "  ")
-				avg.Result = strings.TrimSpace(pathVirusString[1])
+				if len(pathVirusString) >= 2 {
+					avg.Result = strings.TrimSpace(pathVirusString[1])
+				} else {
+					log.Error("[ERROR] could not extract virus string from pathVirusString.")
+					log.Errorf("[ERROR] pathVirusString was: \n%s", pathVirusString)
+				}
 			}
 		}
 	}
@@ -348,11 +369,18 @@ func main() {
 			Name:  "web",
 			Usage: "Create a AVG scan web service",
 			Action: func(c *cli.Context) error {
-				// ctx, cancel := context.WithTimeout(context.Background(), time.Duration(c.Int("timeout"))*time.Second)
-				// defer cancel()
+				ctx, cancel := context.WithTimeout(
+					context.Background(),
+					time.Duration(c.GlobalInt("timeout"))*time.Second,
+				)
+				defer cancel()
+
 				if c.GlobalBool("verbose") {
 					log.SetLevel(log.DebugLevel)
 				}
+				log.Debug("Starting AVG daemon")
+				StartAVGDaemon(ctx)
+				log.Debug("Starting web service")
 				webService()
 
 				return nil
